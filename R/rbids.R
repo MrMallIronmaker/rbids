@@ -38,7 +38,7 @@ print.bids_dataset <- function(bd) {
 }
 
 #' @export
-bids_subject_data_types = function(bd) {
+bids_subject_data_types <- function(bd) {
   files_and_suffixes <- bids_match_path(
     bd,
     paste0(
