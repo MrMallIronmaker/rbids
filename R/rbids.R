@@ -4,7 +4,7 @@
 bids <- function(root, readonly = T) {
   # TODO: error if root is not a character or longer than one
 
-  if(!dir.exists(root) && readonly) {
+  if (!dir.exists(root) && readonly) {
     rlang::abort(paste0("Root directory `", root, "` does not exist"))
   }
 
@@ -75,8 +75,8 @@ bids_match_path <- function(bd, pattern, full.names) {
   df <- data.frame(file_path = all_files(bd, full.names)[matching_rows])
   for (colname in colnames(starts)) {
     lengths <- attr(regexpr_result, "capture.length")[matching_rows, colname]
-    ends <- starts[,colname] + lengths - 1
-    df[colname] <- substr(bd$all_files[matching_rows], starts[,colname], ends)
+    ends <- starts[, colname] + lengths - 1
+    df[colname] <- substr(bd$all_files[matching_rows], starts[, colname], ends)
   }
 
   df
