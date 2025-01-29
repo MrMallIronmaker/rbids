@@ -1,8 +1,23 @@
-# Initialize
-
+#' @title Create a BIDS Dataset Object
+#'
+#' @description This function initializes and returns a `bids_dataset` object. This
+#' represents a BIDS (Brain Imaging Data Structure) dataset rooted at a specified
+#' directory.
+#'
+#' @param root Character string specifying the root directory path
+#' @param readonly Logical, whether the dataset is read-only
+#'
+#' @return An object of class `bids_dataset`, which is a list containing
+#'
 #' @export
-bids <- function(root, readonly = T) {
-  # TODO: error if root is not a character or longer than one
+bids <- function(root, readonly = TRUE) {
+  if (!is.character(root) || length(root) != 1) {
+    rlang::abort("Root must be a single character string")
+  }
+
+  if (!is.logical(readonly) || length(readonly) != 1) {
+    rlang::abort("Readonly must be a single logical value")
+  }
 
   if (!dir.exists(root) && readonly) {
     rlang::abort(paste0("Root directory `", root, "` does not exist"))
@@ -16,6 +31,7 @@ bids <- function(root, readonly = T) {
     readonly = readonly
   )
   class(bids_dataset) <- "bids_dataset"
+
   bids_dataset
 }
 
