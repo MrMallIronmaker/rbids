@@ -1,48 +1,124 @@
-#' @title Create a BIDS Dataset Object
+#' @title Initialize a BIDS Dataset
 #'
-#' @description This function initializes and returns a `bids_dataset` object. This
-#' represents a BIDS (Brain Imaging Data Structure) dataset rooted at a specified
-#' directory.
+#' @description The `bids` function scans a specified root directory for TSV files
+#' following the BIDS (Brain Imaging Data Structure) motion data.
+#' https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html
 #'
-#' @param root Character string specifying the root directory path
-#' @param readonly Logical, whether the dataset is read-only
+#' @param root Single character, root of dataset.
+#' @param readonly Logical, defaults to TRUE.
 #'
-#' @return An object of class `bids_dataset`, which is a list containing
+#' @return An object of class `bids_dataset` containing:
+#' root,
+#' index: Each tsv file attributes. Include subject, session, task... follow spec,
+#' readyonly
 #'
+#' @examples
+#' # Initialize a BIDS dataset from the specified root directory
+#' dataset <- bids("/path/to/bids/root")
+#'
+#' # Print the dataset summary
+#' print(dataset)
+#'
+#' @importFrom rlang abort
+#' @importFrom tools file_path_as_absolute
+#' @importFrom stringr str_match
+#' @importFrom tibble tibble
+#' @importFrom dplyr mutate across
+#' @importFrom tidyr replace_na
 #' @export
 bids <- function(root, readonly = TRUE) {
   if (!is.character(root) || length(root) != 1) {
-    rlang::abort("Root must be a single character string")
+    abort("Root must be a single character string")
   }
 
   if (!is.logical(readonly) || length(readonly) != 1) {
-    rlang::abort("Readonly must be a single logical value")
+    abort("Readonly must be a single logical value")
   }
 
   if (!dir.exists(root) && readonly) {
-    rlang::abort(paste0("Root directory `", root, "` does not exist"))
+    abort(paste0("Root directory `", root, "` does not exist"))
   }
 
-  root <- tools::file_path_as_absolute(root)
+  root <- file_path_as_absolute(root)
+  all_files <- list.files(path = root, recursive = TRUE, full.names = TRUE, pattern = "\\.tsv$")
+  file_names <- basename(all_files)
+
+  pattern <- "^sub-(?<subject>[[:alnum:]]+)" %>%
+    paste0("(?:_ses-(?<session>[[:alnum:]]+))?",
+           "_task-(?<task>[[:alnum:]]+)",
+           "_tracksys-(?<tracksys>[[:alnum:]]+)",
+           "(?:_acq-(?<acq>[[:alnum:]]+))?",
+           "(?:_run-(?<run>[0-9]+))?",
+           "_(?<datatype>[[:alnum:]]+)\\.tsv$")
+
+  extracted_data <- str_match(file_names, pattern)
+
+  if (any(is.na(extracted_data[, 1]))) {
+    warning("Some filenames did not match the regex pattern and will be marked as NA")
+  }
+
+  bids_data <- tibble(
+    file_path = all_files,                      # full path
+    subject = extracted_data[, "subject"],      # sub-<label>
+    session = extracted_data[, "session"],      # ses-<label> (optional)
+    task = extracted_data[, "task"],            # task-<label>
+    tracksys = extracted_data[, "tracksys"],    # tracksys-<label>
+    acq = extracted_data[, "acq"],              # acq-<label> (optional)
+    run = extracted_data[, "run"],              # run-<index> (optional)
+    datatype = extracted_data[, "datatype"]     # datatype (e.g., motion)
+  ) %>%
+    mutate(across(everything(), ~replace_na(.x, NA_character_)))
 
   bids_dataset <- list(
     root = root,
-    all_files = list.files(path = root, recursive = TRUE),
+    index = bids_data,
     readonly = readonly
   )
   class(bids_dataset) <- "bids_dataset"
 
-  bids_dataset
+  return(bids_dataset)
 }
 
 
-#' @method print bids_dataset
+#' Print Method for BIDS Dataset
+#'
+#' @importFrom rlang abort
 #' @export
 print.bids_dataset <- function(bd) {
+  if (!inherits(bd, "bids_dataset")) {
+    abort("The object provided is not a 'bids_dataset'")
+  }
+
   cat("BIDS Dataset Summary\n")
   cat("====================\n")
-  cat(sprintf("%-15s %s\n", "Root:", bd$root))
-  cat(sprintf("%-15s %d\n", "Total Files:", length(bd$all_files)))
+  cat(sprintf("%-20s %s\n", "Root:", bd$root))
+  cat(sprintf("%-20s %d\n", "Data Files:", nrow(bd$index)))
+
+  # Extract unique counts and values
+  subject_count <- length(unique(bd$index$subject))
+  subjects <- paste(sort(unique(bd$index$subject)), collapse = ", ")
+
+  session_values <- bd$index$session
+  session_values <- session_values[!is.na(session_values)]
+  sessions <- if (length(session_values) > 0)
+    paste(sort(unique(session_values)), collapse = ", ") else "None"
+
+  task_values <- bd$index$task
+  task_values <- task_values[!is.na(task_values)]
+  tasks <- if (length(task_values) > 0)
+    paste(sort(unique(task_values)), collapse = ", ") else "None"
+
+  datatype_values <- bd$index$datatype
+  datatype_values <- datatype_values[!is.na(datatype_values)]
+  datatypes <- if (length(datatype_values) > 0)
+    paste(sort(unique(datatype_values)), collapse = ", ") else "None"
+
+  cat(sprintf("%-20s %d\n", "Total Subjects:", subject_count))
+  cat(sprintf("%-20s %s\n", "Subjects:", subjects))
+  cat(sprintf("%-20s %s\n", "Sessions:", sessions))
+  cat(sprintf("%-20s %s\n", "Tasks:", tasks))
+  cat(sprintf("%-20s %s\n", "Datatypes:", datatypes))
+
   invisible(bd)
 }
 
