@@ -98,17 +98,47 @@ all_files <- function(bd, full.name = FALSE) {
 }
 
 
-#--- Workhorse search functions
+#' @title Match file paths using regular expressions
+#'
+#' @description This function searches for file paths in bd$all_files that match a
+#' given regular expression pattern. If the pattern includes capture groups, the function
+#' extracts the matched substrings and returns them as additional columns.
+#'
+#' @param bd A bids_dataset object
+#' @param pattern A string representing the regular expression pattern
+#' @param full.name Logical. Default FALSE, returns absolute paths if TRUE
+#'
+#' @return A data.frame with: the matched file paths. Additional columns
+#' for each capture group in pattern, containing extracted substrings.
+#'
 #' @export
-bids_match_path <- function(bd, pattern, full.names) {
-  regexpr_result <- regexpr(pattern, bd$all_files, perl = TRUE)
+bids_match_path <- function(bd, pattern, full.name = FALSE) {
+  if (!inherits(bd, "bids_dataset")) {
+    rlang::abort("bd must be a bids_dataset object")
+  }
 
-  matching_rows <- regexpr_result == 1
-  starts <- attr(regexpr_result, "capture.start")[matching_rows, , drop = FALSE]
+  if (!is.character(pattern)) {
+    rlang::abort("pattern must be a character string")
+  }
+  if (length(pattern) != 1) {
+    rlang::abort("pattern must be a single character string")
+  }
+  if (is.na(pattern) || pattern == "") {
+    rlang::abort("pattern cannot be NA or empty string")
+  }
 
-  df <- data.frame(file_path = all_files(bd, full.names)[matching_rows])
+  if (!is.logical(full.name) || length(full.name) != 1) {
+    rlang::abort("full.name must be a single logical value")
+  }
+
+  regexpr_results <- regexpr(pattern, bd$all_files, perl = TRUE)
+  matching_rows <- regexpr_results == 1
+  starts <- attr(regexpr_results, "capture.start")[matching_rows, , drop = FALSE]
+
+  df <- data.frame(file_path = all_files(bd, full.name)[matching_rows])
+
   for (colname in colnames(starts)) {
-    lengths <- attr(regexpr_result, "capture.length")[matching_rows, colname]
+    lengths <- attr(regexpr_results, "capture.length")[matching_rows, colname]
     ends <- starts[, colname] + lengths - 1
     df[colname] <- substr(bd$all_files[matching_rows], starts[, colname], ends)
   }
