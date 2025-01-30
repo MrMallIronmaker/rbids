@@ -67,7 +67,7 @@ bids_subject_data_types <- function(bd) {
       "(?<data_type_suffix>[[:alnum:]]+)",
       ".tsv$"
     ),
-    full.names = T # this isn't used, just provided for function signature.
+    full.names = TRUE
   )
   sort(unique(files_and_suffixes$data_type_suffix))
 }
@@ -84,10 +84,10 @@ all_files <- function(bd, full.names) {
 #--- Workhorse search functions
 #' @export
 bids_match_path <- function(bd, pattern, full.names) {
-  regexpr_result <- regexpr(pattern, bd$all_files, perl = T)
+  regexpr_result <- regexpr(pattern, bd$all_files, perl = TRUE)
 
   matching_rows <- regexpr_result == 1
-  starts <- attr(regexpr_result, "capture.start")[matching_rows, , drop = F]
+  starts <- attr(regexpr_result, "capture.start")[matching_rows, , drop = FALSE]
 
   df <- data.frame(file_path = all_files(bd, full.names)[matching_rows])
   for (colname in colnames(starts)) {
@@ -101,7 +101,7 @@ bids_match_path <- function(bd, pattern, full.names) {
 
 #--- Specific data helpers
 #' @export
-bids_all_files <- function(bd, full.names = T) {
+bids_all_files <- function(bd, full.names = TRUE) {
   data.frame(file_path = all_files(bd, full.names))
 }
 
@@ -122,7 +122,7 @@ bids_motion_regex <- function() {
 }
 
 #' @export
-bids_motion <- function(bd, full.names = T) {
+bids_motion <- function(bd, full.names = TRUE) {
   bids_match_path(
     bd,
     bids_motion_regex(),
@@ -131,7 +131,7 @@ bids_motion <- function(bd, full.names = T) {
 }
 
 #' @export
-bids_subject_data <- function(bd, suffix, full.names = T) {
+bids_subject_data <- function(bd, suffix, full.names = TRUE) {
   # bad name, perhaps subject-level data e.g.?
   bids_match_path(
     bd,
@@ -145,17 +145,17 @@ bids_subject_data <- function(bd, suffix, full.names = T) {
 }
 
 #' @export
-bids_subjects <- function(bd, full.names = T) {
+bids_subjects <- function(bd, full.names = TRUE) {
   read_tsv(file.path(bd$root, "participants.tsv"))
 }
 
 #' @export
-bids_sessions <- function(bd, full.names = T) {
+bids_sessions <- function(bd, full.names = TRUE) {
   bids_subject_data(bd, "sessions", full.names = full.names)
 }
 
 #' @export
-bids_events <- function(bd, full.names = T) {
+bids_events <- function(bd, full.names = TRUE) {
   # TODO: this doesn't follow the convention - I'm not sure if it should though
   bids_match_path(
     bd,
@@ -179,31 +179,31 @@ bids_read_tsvs <- function(bids_table, ...) {
 
 #' @keywords Internal
 ensure_write_access <- function(bids_dataset) {
-  if (is.null(bids_dataset$readonly) | bids_dataset$readonly != F) {
+  if (is.null(bids_dataset$readonly) | bids_dataset$readonly != FALSE) {
     rlang::abort("Bids dataset argument is readonly. Refusing to write.")
   }
 }
 
 #' @keywords Internal
 #' @importFrom readr write_tsv read_tsv
-write_tsv_at <- function(x, file, append = F) {
+write_tsv_at <- function(x, file, append = FALSE) {
   if (!dir.exists(dirname(file))) {
-    dir.create(dirname(file), recursive = T)
+    dir.create(dirname(file), recursive = TRUE)
   }
   if (append && file.exists(file)) {
-    ttsv <- read_tsv(file, col_names = T, n_max = 0, show_col_types = F)
+    ttsv <- read_tsv(file, col_names = TRUE, n_max = 0, show_col_types = FALSE)
     if (!isTRUE(all.equal(colnames(ttsv), colnames(x)))) {
       rlang::abort(paste0("Could not append to file `", file, "` because column names are not equivalent."))
     }
-    write_tsv(x, file, append = T)
+    write_tsv(x, file, append = TRUE)
   } else {
     # either the file doesn't exist or we're not appending, so erase & include the header.
-    write_tsv(x, file, append = F)
+    write_tsv(x, file, append = FALSE)
   }
 }
 
 #' @export
-bids_write_motion_file <- function(participant_id, session_id, task_id, data, bids_dataset, append = F) {
+bids_write_motion_file <- function(participant_id, session_id, task_id, data, bids_dataset, append = FALSE) {
   # ugh: I don't like the argument order here.
   # TODO: check if motion.json matches the file
 
@@ -221,7 +221,7 @@ bids_write_motion_file <- function(participant_id, session_id, task_id, data, bi
 }
 
 #' @export
-bids_write_motion_files <- function(df, bids_dataset, .progress = T, append = F) {
+bids_write_motion_files <- function(df, bids_dataset, .progress = TRUE, append = FALSE) {
 
   # this assumes df has columns of
   # participant_id, session_id, and data
