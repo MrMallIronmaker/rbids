@@ -35,23 +35,24 @@ bids <- function(root, readonly = TRUE) {
   bids_dataset
 }
 
+
+#' @method print bids_dataset
+#' @export
+print.bids_dataset <- function(bd) {
+  cat("BIDS Dataset Summary\n")
+  cat("====================\n")
+  cat(sprintf("%-15s %s\n", "Root:", bd$root))
+  cat(sprintf("%-15s %d\n", "Total Files:", length(bd$all_files)))
+  invisible(bd)
+}
+
+
 # Regex helpers (all internal)
 
 subject_capture <- "sub-(?<participant_id>[[:alnum:]]+)"
 path_sep <- "[\\\\\\/]"
 subject_backref <- "sub-(?P=participant_id)"
 
-# Printing and querying data
-#' @method print bids_dataset
-#' @export
-print.bids_dataset <- function(bd) {
-  cat("BIDS format data consisting of ")
-  cat(length(bd$all_files))
-  cat(" files rooted at \"")
-  cat(bd$root)
-  cat("\"")
-  invisible(bd)
-}
 
 #' @export
 bids_subject_data_types <- function(bd) {
