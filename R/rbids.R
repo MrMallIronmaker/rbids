@@ -67,19 +67,36 @@ bids_subject_data_types <- function(bd) {
       "(?<data_type_suffix>[[:alnum:]]+)",
       ".tsv$"
     ),
-    full.names = TRUE
+    full.name = TRUE
   )
   sort(unique(files_and_suffixes$data_type_suffix))
 }
 
+#' @title Get BIDS Dataset Files
+#'
+#' @description Returns the file paths from a BIDS dataset, optionally as full paths
+#'
+#' @param bd A bids_dataset object
+#' @param full.name Logical. Default FALSE, returns absolute paths if TRUE
+#'
+#' @return A character vector of file paths
+#'
 #' @keywords Internal
-all_files <- function(bd, full.names) {
+all_files <- function(bd, full.name = FALSE) {
+  if (!inherits(bd, "bids_dataset")) {
+    rlang::abort("bd must be a bids_dataset object")
+  }
+  if (!is.logical(full.name) || length(full.name) != 1) {
+    rlang::abort("full.name must be a single logical value")
+  }
+
   files <- bd$all_files
-  if (full.names) {
+  if (full.name) {
     files <- file.path(bd$root, files)
   }
   files
 }
+
 
 #--- Workhorse search functions
 #' @export
@@ -126,7 +143,7 @@ bids_motion <- function(bd, full.names = TRUE) {
   bids_match_path(
     bd,
     bids_motion_regex(),
-    full.names = full.names
+    full.name = full.names
   )
 }
 
@@ -140,7 +157,7 @@ bids_subject_data <- function(bd, suffix, full.names = TRUE) {
       suffix,
       ".tsv$"
     ),
-    full.names = full.names
+    full.name = full.names
   )
 }
 
@@ -160,7 +177,7 @@ bids_events <- function(bd, full.names = TRUE) {
   bids_match_path(
     bd,
     "ses-(?<session_id>[a-zA-Z0-9]+)_task-(?<task_label>[a-zA-Z0-9]+)_events.tsv",
-    full.names = full.names
+    full.name = full.names
   )
 }
 
