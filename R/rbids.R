@@ -146,10 +146,18 @@ bids_match_path <- function(bd, pattern, full.name = FALSE) {
   df
 }
 
-#--- Specific data helpers
+#' @title Get BIDS Dataset Files
+#'
+#' @description Returns the file paths from a BIDS dataset, optionally as full paths
+#'
+#' @param bd A bids_dataset object
+#' @param full.name Logical. Default TRUE, returns relative paths if
+#'
+#' @return A data.frame contains all files path
+#'
 #' @export
-bids_all_files <- function(bd, full.names = TRUE) {
-  data.frame(file_path = all_files(bd, full.names))
+bids_all_files <- function(bd, full.name = TRUE) {
+  data.frame(file_path = all_files(bd, full.name))
 }
 
 #' @export
