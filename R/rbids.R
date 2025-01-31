@@ -82,13 +82,9 @@ bids <- function(root, readonly = TRUE) {
 
 #' Print Method for BIDS Dataset
 #'
-#' @importFrom rlang abort
 #' @export
 print.bids_dataset <- function(bd) {
-  if (!inherits(bd, "bids_dataset")) {
-    abort("The object provided is not a 'bids_dataset'")
-  }
-
+  .bids_obj_checker(bd)
   cat("BIDS Dataset Summary\n")
   cat("====================\n")
   cat(sprintf("%-20s %s\n", "Root:", bd$root))
@@ -122,118 +118,21 @@ print.bids_dataset <- function(bd) {
   invisible(bd)
 }
 
-
-# Regex helpers (all internal)
-
-subject_capture <- "sub-(?<participant_id>[[:alnum:]]+)"
-path_sep <- "[\\\\\\/]"
-subject_backref <- "sub-(?P=participant_id)"
-
-
-#' @export
-bids_subject_data_types <- function(bd) {
-  files_and_suffixes <- bids_match_path(
-    bd,
-    paste0(
-      "^",
-      subject_regex,
-      path_sep,
-      subject_backref,
-      "_",
-      "(?<data_type_suffix>[[:alnum:]]+)",
-      ".tsv$"
-    ),
-    full.name = TRUE
-  )
-  sort(unique(files_and_suffixes$data_type_suffix))
-}
-
-#' @title Get BIDS Dataset Files
+#' @title Check if it's a bids object
 #'
-#' @description Returns the file paths from a BIDS dataset, optionally as full paths
-#'
-#' @param bd A bids_dataset object
-#' @param full.name Logical. Default FALSE, returns absolute paths if TRUE
-#'
-#' @return A character vector of file paths
-#'
-#' @keywords Internal
-all_files <- function(bd, full.name = FALSE) {
+#' @importFrom rlang abort
+.bids_obj_checker <- function(bd) {
   if (!inherits(bd, "bids_dataset")) {
-    rlang::abort("bd must be a bids_dataset object")
+    abort("The object provided is not a 'bids_dataset'")
   }
-  if (!is.logical(full.name) || length(full.name) != 1) {
-    rlang::abort("full.name must be a single logical value")
-  }
-
-  files <- bd$all_files
-  if (full.name) {
-    files <- file.path(bd$root, files)
-  }
-  files
 }
 
-
-#' @title Match file paths using regular expressions
-#'
-#' @description This function searches for file paths in bd$all_files that match a
-#' given regular expression pattern. If the pattern includes capture groups, the function
-#' extracts the matched substrings and returns them as additional columns.
-#'
-#' @param bd A bids_dataset object
-#' @param pattern A string representing the regular expression pattern
-#' @param full.name Logical. Default FALSE, returns absolute paths if TRUE
-#'
-#' @return A data.frame with: the matched file paths. Additional columns
-#' for each capture group in pattern, containing extracted substrings.
+#' @title Get BIDS data files
 #'
 #' @export
-bids_match_path <- function(bd, pattern, full.name = FALSE) {
-  if (!inherits(bd, "bids_dataset")) {
-    rlang::abort("bd must be a bids_dataset object")
-  }
-
-  if (!is.character(pattern)) {
-    rlang::abort("pattern must be a character string")
-  }
-  if (length(pattern) != 1) {
-    rlang::abort("pattern must be a single character string")
-  }
-  if (is.na(pattern) || pattern == "") {
-    rlang::abort("pattern cannot be NA or empty string")
-  }
-
-  if (!is.logical(full.name) || length(full.name) != 1) {
-    rlang::abort("full.name must be a single logical value")
-  }
-
-  regexpr_results <- regexpr(pattern, bd$all_files, perl = TRUE)
-  matching_rows <- regexpr_results == 1
-  starts <- attr(regexpr_results, "capture.start")[matching_rows, , drop = FALSE]
-
-  df <- data.frame(file_path = all_files(bd, full.name)[matching_rows])
-
-  for (colname in colnames(starts)) {
-    lengths <- attr(regexpr_results, "capture.length")[matching_rows, colname]
-    ends <- starts[, colname] + lengths - 1
-    df[colname] <- substr(bd$all_files[matching_rows], starts[, colname], ends)
-  }
-
-  df
-}
-
-#' @title Get BIDS Dataset Files
-#'
-#' @description Returns the file paths from a BIDS dataset, optionally as full paths
-#'
-#' @param bd A bids_dataset object
-#' @param full.name Logical. Default TRUE, returns relative paths if
-#'
-#' @return A data.frame contains all files path
-#'
-#' @export
-bids_all_files <- function(bd, full.name = TRUE) {
-  data.frame(file_path = all_files(bd, full.name))
+bids_all_datafiles <- function(bd) {
+  .bids_obj_checker(bd)
+  bd$index$file_path
 }
 
 #' @export

@@ -2,9 +2,8 @@
 
 S3method(print,bids_dataset)
 export(bids)
-export(bids_all_files)
+export(bids_all_datafiles)
 export(bids_events)
-export(bids_match_path)
 export(bids_motion)
 export(bids_motion_regex)
 export(bids_read_tsvs)
