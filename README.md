@@ -5,6 +5,7 @@ BIDS is cool!
 I work in R, and it solves my problems for standardized datasets.
 
 ## Quick Sample
+
 ```r
 # devtools::install_github("markromanmiller/rbids")
 library(rbids)
@@ -21,5 +22,5 @@ bd %>%
 
 # get metadata about all the motion files
 bd %>%
-  bids_motion()
+  bids_motion_datafiles()
 ```

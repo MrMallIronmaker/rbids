@@ -14,7 +14,7 @@
 #'
 #' @examples
 #' # Initialize a BIDS dataset from the specified root directory
-#' dataset <- bids("/path/to/bids/root")
+#' dataset <- bids(tempdir())
 #'
 #' # Print the dataset summary
 #' print(dataset)
@@ -81,6 +81,8 @@ bids <- function(root, readonly = TRUE) {
 
 
 #' Print Method for BIDS Dataset
+#'
+#' @importFrom magrittr %>%
 #'
 #' @export
 print.bids_dataset <- function(bd) {
