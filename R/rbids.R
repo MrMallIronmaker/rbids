@@ -195,46 +195,20 @@ bids_all_datafiles <- function(bd) {
 }
 
 #' @export
-bids_motion_regex <- function() {
-  # I am unsure if this should be exported normally...
-  paste0(
-    "^",
-    subject_capture,
-    path_sep,
-    "ses-(?<session_id>[[:alnum:]]+)/",
-    "motion/",
-    subject_backref,
-    "_",
-    "ses-(?P=session_id)",
-    "_task-(?<task_label>[[:alnum:]]+)_motion.tsv$"
-  )
+bids_motion_datafiles <- function(bd) {
+  .bids_obj_checker(bd)
+  bids_datafiles_filter(bd, datatype = "motion")
 }
 
 #' @export
-bids_motion <- function(bd, full.names = TRUE) {
-  bids_match_path(
-    bd,
-    bids_motion_regex(),
-    full.name = full.names
-  )
+bids_get_motion_by_subject <- function(bd, sub) {
+  .bids_obj_checker(bd)
+  bids_datafiles_filter(bd, subject = sub, datatype = "motion")
 }
 
 #' @export
-bids_subject_data <- function(bd, suffix, full.names = TRUE) {
-  # bad name, perhaps subject-level data e.g.?
-  bids_match_path(
-    bd,
-    paste0(
-      "^sub-(?<participant_id>[[:alnum:]]+)[\\\\\\/]sub-\\g1_",
-      suffix,
-      ".tsv$"
-    ),
-    full.name = full.names
-  )
-}
-
-#' @export
-bids_subjects <- function(bd, full.names = TRUE) {
+bids_subjects <- function(bd) {
+  .bids_obj_checker(bd)
   read_tsv(file.path(bd$root, "participants.tsv"))
 }
 
