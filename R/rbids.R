@@ -127,6 +127,63 @@ print.bids_dataset <- function(bd) {
   }
 }
 
+
+#' BIDS Dataset Files Filter
+#'
+#' @importFrom dplyr filter
+#'
+#' @export
+bids_datafiles_filter <- function(bids_dataset,
+                                  subject = NULL,
+                                  session = NULL,
+                                  task = NULL,
+                                  tracksys = NULL,
+                                  acq = NULL,
+                                  run = NULL,
+                                  datatype = NULL) {
+  .bids_obj_checker(bd)
+
+  # Helper function to split parameter values
+  split_param <- function(param) {
+    if (is.null(param)) return(NULL)
+    unique(trimws(strsplit(param, "&")[[1]]))
+  }
+
+  # Split all parameters
+  subjects <- split_param(subject)
+  sessions <- split_param(session)
+  tasks <- split_param(task)
+  tracksystems <- split_param(tracksys)
+  acqs <- split_param(acq)
+  runs <- split_param(run)
+  datatypes <- split_param(datatype)
+
+  bids_data <- bids_dataset$index
+
+  # Apply filters using %in% operator for multiple values
+  filtered_data <- bids_data %>%
+    dplyr::filter(
+      if (!is.null(subjects)) .data$subject %in% subjects else TRUE,
+      if (!is.null(sessions)) .data$session %in% sessions else TRUE,
+      if (!is.null(tasks)) .data$task %in% tasks else TRUE,
+      if (!is.null(tracksystems)) .data$tracksys %in% tracksystems else TRUE,
+      if (!is.null(acqs)) .data$acq %in% acqs else TRUE,
+      if (!is.null(runs)) .data$run %in% runs else TRUE,
+      if (!is.null(datatypes)) .data$datatype %in% datatypes else TRUE
+    )
+
+  if (nrow(filtered_data) == 0) {
+    warning("No records match the filtering criteria.")
+    return(character(0))
+  }
+
+  file_paths <- filtered_data %>%
+    dplyr::pull(file_path)
+
+  file_paths
+}
+
+
 #' @title Get BIDS data files
 #'
 #' @export
