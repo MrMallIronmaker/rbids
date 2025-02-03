@@ -2,7 +2,7 @@
 % Please edit documentation in R/rbids.R
 \name{bids_datafiles_filter}
 \alias{bids_datafiles_filter}
-\title{BIDS Dataset Files Filter}
+\title{Filter BIDS Dataset Files}
 \usage{
 bids_datafiles_filter(
   bids_dataset,
@@ -15,6 +15,33 @@ bids_datafiles_filter(
   datatype = NULL
 )
 }
+\arguments{
+\item{bids_dataset}{A BIDS dataset object.}
+
+\item{subject}{Optional. Subject ID(s) to include or exclude.}
+
+\item{session}{Optional. Session ID(s) to include or exclude.}
+
+\item{task}{Optional. Task name(s) to include or exclude.}
+
+\item{tracksys}{Optional. Tracking system(s) to include or exclude.}
+
+\item{acq}{Optional. Acquisition type(s) to include or exclude.}
+
+\item{run}{Optional. Run number(s) to include or exclude.}
+
+\item{datatype}{Optional. Data type(s) to include or exclude.}
+}
+\value{
+A character vector of filtered file paths. Returns an empty vector if no
+matches found.
+}
 \description{
-BIDS Dataset Files Filter
+Filters a BIDS dataset based on specified subject, session, task,
+acquisition, tracking system, run, and datatype criteria.
+}
+\examples{
+bids_files <- bids_datafiles_filter(bids_dataset, subject = "1&2", datatype = "motion")
+bids_files <- bids_datafiles_filter(bids_dataset, subject = "-1", datatype = "motion")
+
 }

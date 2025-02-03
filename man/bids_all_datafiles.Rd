@@ -4,7 +4,7 @@
 \alias{bids_all_datafiles}
 \title{Get BIDS data files}
 \usage{
-bids_all_datafiles(bd)
+bids_all_datafiles(bids_dataset)
 }
 \description{
 Get BIDS data files

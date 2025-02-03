@@ -130,9 +130,24 @@ print.bids_dataset <- function(bd) {
 }
 
 
-#' BIDS Dataset Files Filter
+#' @title Filter BIDS Dataset Files
+#' @description Filters a BIDS dataset based on specified subject, session, task,
+#' acquisition, tracking system, run, and datatype criteria.
+#' @param bids_dataset A BIDS dataset object.
+#' @param subject Optional. Subject ID(s) to include or exclude.
+#' @param session Optional. Session ID(s) to include or exclude.
+#' @param task Optional. Task name(s) to include or exclude.
+#' @param tracksys Optional. Tracking system(s) to include or exclude.
+#' @param acq Optional. Acquisition type(s) to include or exclude.
+#' @param run Optional. Run number(s) to include or exclude.
+#' @param datatype Optional. Data type(s) to include or exclude.
 #'
-#' @importFrom dplyr filter
+#' @return A character vector of filtered file paths. Returns an empty vector if no
+#' matches found.
+#'
+#' @examples
+#' bids_files <- bids_datafiles_filter(bids_dataset, subject = "1&2", datatype = "motion")
+#' bids_files <- bids_datafiles_filter(bids_dataset, subject = "-1", datatype = "motion")
 #'
 #' @export
 bids_datafiles_filter <- function(bids_dataset,
@@ -145,44 +160,47 @@ bids_datafiles_filter <- function(bids_dataset,
                                   datatype = NULL) {
   .bids_obj_checker(bids_dataset)
 
-  # Helper function to split parameter values
-  split_param <- function(param) {
-    if (is.null(param)) return(NULL)
-    unique(trimws(strsplit(param, "&")[[1]]))
+  parse_param <- function(param) {
+    if (is.null(param)) return(list(include = NULL, exclude = NULL))
+    tokens <- unique(trimws(unlist(strsplit(param, "&"))))
+    list(
+      include = if (any(!startsWith(tokens, "-"))) tokens[!startsWith(tokens, "-")] else NULL,
+      exclude = if (any(startsWith(tokens, "-"))) sub("^-", "", tokens[startsWith(tokens, "-")]) else NULL
+    )
   }
 
-  # Split all parameters
-  subjects <- split_param(subject)
-  sessions <- split_param(session)
-  tasks <- split_param(task)
-  tracksystems <- split_param(tracksys)
-  acqs <- split_param(acq)
-  runs <- split_param(run)
-  datatypes <- split_param(datatype)
+  params <- list(
+    subject = parse_param(subject),
+    session = parse_param(session),
+    task = parse_param(task),
+    tracksys = parse_param(tracksys),
+    acq = parse_param(acq),
+    run = parse_param(run),
+    datatype = parse_param(datatype)
+  )
 
   bids_data <- bids_dataset$index
 
-  # Apply filters using %in% operator for multiple values
-  filtered_data <- bids_data %>%
-    dplyr::filter(
-      if (!is.null(subjects)) .data$subject %in% subjects else TRUE,
-      if (!is.null(sessions)) .data$session %in% sessions else TRUE,
-      if (!is.null(tasks)) .data$task %in% tasks else TRUE,
-      if (!is.null(tracksystems)) .data$tracksys %in% tracksystems else TRUE,
-      if (!is.null(acqs)) .data$acq %in% acqs else TRUE,
-      if (!is.null(runs)) .data$run %in% runs else TRUE,
-      if (!is.null(datatypes)) .data$datatype %in% datatypes else TRUE
-    )
+  apply_filter <- function(data, field, param) {
+    if (!is.null(param$include)) {
+      data <- data %>% dplyr::filter(.data[[field]] %in% param$include)
+    }
+    if (!is.null(param$exclude)) {
+      data <- data %>% dplyr::filter(!(.data[[field]] %in% param$exclude))
+    }
+    data
+  }
 
-  if (nrow(filtered_data) == 0) {
+  for (field in names(params)) {
+    bids_data <- apply_filter(bids_data, field, params[[field]])
+  }
+
+  if (nrow(bids_data) == 0) {
     warning("No records match the filtering criteria.")
     return(character(0))
   }
 
-  file_paths <- filtered_data %>%
-    dplyr::pull(file_path)
-
-  file_paths
+  bids_data %>% dplyr::pull(file_path)
 }
 
 
