@@ -40,22 +40,19 @@ bids <- function(root, readonly = TRUE) {
   }
 
   root <- file_path_as_absolute(root)
-  all_files <- list.files(path = root, recursive = TRUE, full.names = TRUE, pattern = "\\.tsv$")
+  all_files <- list.files(path = root, recursive = TRUE, full.names = TRUE,
+                          pattern = "\\.tsv$")
   file_names <- basename(all_files)
 
-  pattern <- "^sub-(?<subject>[[:alnum:]]+)" %>%
-    paste0("(?:_ses-(?<session>[[:alnum:]]+))?",
-           "_task-(?<task>[[:alnum:]]+)",
-           "_tracksys-(?<tracksys>[[:alnum:]]+)",
-           "(?:_acq-(?<acq>[[:alnum:]]+))?",
-           "(?:_run-(?<run>[0-9]+))?",
-           "_(?<datatype>[[:alnum:]]+)\\.tsv$")
+  pattern <- paste0("^sub-(?<subject>[[:alnum:]]+)",
+                    "(?:_ses-(?<session>[[:alnum:]]+))?",
+                    "_task-(?<task>[[:alnum:]]+)",
+                    "_tracksys-(?<tracksys>[[:alnum:]]+)",
+                    "(?:_acq-(?<acq>[[:alnum:]]+))?",
+                    "(?:_run-(?<run>[0-9]+))?",
+                    "_(?<datatype>[[:alnum:]]+)\\.tsv$")
 
   extracted_data <- str_match(file_names, pattern)
-
-  if (any(is.na(extracted_data[, 1]))) {
-    warning("Some filenames did not match the regex pattern and will be marked as NA")
-  }
 
   bids_data <- tibble(
     file_path = all_files,                      # full path
@@ -83,6 +80,7 @@ bids <- function(root, readonly = TRUE) {
 #' Print Method for BIDS Dataset
 #'
 #' @importFrom magrittr %>%
+#' @importFrom stringr
 #'
 #' @export
 print.bids_dataset <- function(bd) {
@@ -94,7 +92,10 @@ print.bids_dataset <- function(bd) {
 
   # Extract unique counts and values
   subject_count <- length(unique(bd$index$subject))
-  subjects <- paste(sort(unique(bd$index$subject)), collapse = ", ")
+  subjects <- paste(
+    paste(head(sort(unique(bd$index$subject)), 5), collapse = ", "),
+    "..."
+  )
 
   session_values <- bd$index$session
   session_values <- session_values[!is.na(session_values)]
@@ -196,35 +197,21 @@ bids_all_datafiles <- function(bd) {
 
 #' @export
 bids_motion_datafiles <- function(bd) {
-  .bids_obj_checker(bd)
   bids_datafiles_filter(bd, datatype = "motion")
 }
 
 #' @export
 bids_get_motion_by_subject <- function(bd, sub) {
-  .bids_obj_checker(bd)
   bids_datafiles_filter(bd, subject = sub, datatype = "motion")
 }
 
 #' @export
-bids_subjects <- function(bd) {
+bids_participants <- function(bd) {
   .bids_obj_checker(bd)
-  read_tsv(file.path(bd$root, "participants.tsv"))
-}
-
-#' @export
-bids_sessions <- function(bd, full.names = TRUE) {
-  bids_subject_data(bd, "sessions", full.names = full.names)
-}
-
-#' @export
-bids_events <- function(bd, full.names = TRUE) {
-  # TODO: this doesn't follow the convention - I'm not sure if it should though
-  bids_match_path(
-    bd,
-    "ses-(?<session_id>[a-zA-Z0-9]+)_task-(?<task_label>[a-zA-Z0-9]+)_events.tsv",
-    full.name = full.names
-  )
+  participants_data <- read_tsv(file.path(bd$root, "participants.tsv"),
+                                show_col_types = FALSE)
+  glimpse(participants_data)
+  invisible(participants_data)
 }
 
 # bids_table has a "file_path" column,
