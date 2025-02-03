@@ -80,7 +80,6 @@ bids <- function(root, readonly = TRUE) {
 #' Print Method for BIDS Dataset
 #'
 #' @importFrom magrittr %>%
-#' @importFrom stringr
 #'
 #' @export
 print.bids_dataset <- function(bd) {
@@ -144,7 +143,7 @@ bids_datafiles_filter <- function(bids_dataset,
                                   acq = NULL,
                                   run = NULL,
                                   datatype = NULL) {
-  .bids_obj_checker(bd)
+  .bids_obj_checker(bids_dataset)
 
   # Helper function to split parameter values
   split_param <- function(param) {
@@ -190,25 +189,25 @@ bids_datafiles_filter <- function(bids_dataset,
 #' @title Get BIDS data files
 #'
 #' @export
-bids_all_datafiles <- function(bd) {
-  .bids_obj_checker(bd)
-  bd$index$file_path
+bids_all_datafiles <- function(bids_dataset) {
+  .bids_obj_checker(bids_dataset)
+  bids_dataset$index$file_path
 }
 
 #' @export
-bids_motion_datafiles <- function(bd) {
-  bids_datafiles_filter(bd, datatype = "motion")
+bids_motion_datafiles <- function(bids_dataset) {
+  bids_datafiles_filter(bids_dataset, datatype = "motion")
 }
 
 #' @export
-bids_get_motion_by_subject <- function(bd, sub) {
-  bids_datafiles_filter(bd, subject = sub, datatype = "motion")
+bids_get_motion_by_subject <- function(bids_dataset, subject) {
+  bids_datafiles_filter(bids_dataset, subject = subject, datatype = "motion")
 }
 
 #' @export
-bids_participants <- function(bd) {
-  .bids_obj_checker(bd)
-  participants_data <- read_tsv(file.path(bd$root, "participants.tsv"),
+bids_participants <- function(bids_dataset) {
+  .bids_obj_checker(bids_dataset)
+  participants_data <- read_tsv(file.path(bids_dataset$root, "participants.tsv"),
                                 show_col_types = FALSE)
   glimpse(participants_data)
   invisible(participants_data)
