@@ -27,16 +27,14 @@
 #' @importFrom tidyr replace_na
 #' @export
 bids <- function(root, readonly = TRUE) {
-  if (!is.character(root) || length(root) != 1) {
-    abort("Root must be a single character string")
-  }
+  .bool_check(root, "name")
+  .bool_check(readonly, "readonly")
 
-  if (!is.logical(readonly) || length(readonly) != 1) {
-    abort("Readonly must be a single logical value")
-  }
-
-  if (!dir.exists(root) && readonly) {
-    abort(paste0("Root directory `", root, "` does not exist"))
+  if (!dir.exists(root)) {
+    if (readonly) {
+      abort(paste0("Root directory `", root, "` does not exist."))
+    }
+    warning(paste0("You are writing to `"), root, "`")
   }
 
   root <- file_path_as_absolute(root)
@@ -82,31 +80,31 @@ bids <- function(root, readonly = TRUE) {
 #' @importFrom magrittr %>%
 #'
 #' @export
-print.bids_dataset <- function(bd) {
-  .bids_obj_checker(bd)
+print.bids_dataset <- function(bids_dataset) {
+  .bids_obj_check(bids_dataset)
   cat("BIDS Dataset Summary\n")
   cat("====================\n")
-  cat(sprintf("%-20s %s\n", "Root:", bd$root))
-  cat(sprintf("%-20s %d\n", "Data Files:", nrow(bd$index)))
+  cat(sprintf("%-20s %s\n", "Root:", bids_dataset$root))
+  cat(sprintf("%-20s %d\n", "Data Files:", nrow(bids_dataset$index)))
 
   # Extract unique counts and values
-  subject_count <- length(unique(bd$index$subject))
+  subject_count <- length(unique(bids_dataset$index$subject))
   subjects <- paste(
-    paste(head(sort(unique(bd$index$subject)), 5), collapse = ", "),
+    paste(head(sort(unique(bids_dataset$index$subject)), 5), collapse = ", "),
     "..."
   )
 
-  session_values <- bd$index$session
+  session_values <- bids_dataset$index$session
   session_values <- session_values[!is.na(session_values)]
   sessions <- if (length(session_values) > 0)
     paste(sort(unique(session_values)), collapse = ", ") else "None"
 
-  task_values <- bd$index$task
+  task_values <- bids_dataset$index$task
   task_values <- task_values[!is.na(task_values)]
   tasks <- if (length(task_values) > 0)
     paste(sort(unique(task_values)), collapse = ", ") else "None"
 
-  datatype_values <- bd$index$datatype
+  datatype_values <- bids_dataset$index$datatype
   datatype_values <- datatype_values[!is.na(datatype_values)]
   datatypes <- if (length(datatype_values) > 0)
     paste(sort(unique(datatype_values)), collapse = ", ") else "None"
@@ -117,7 +115,7 @@ print.bids_dataset <- function(bd) {
   cat(sprintf("%-20s %s\n", "Tasks:", tasks))
   cat(sprintf("%-20s %s\n", "Datatypes:", datatypes))
 
-  invisible(bd)
+  invisible(bids_dataset)
 }
 
 
@@ -149,7 +147,7 @@ bids_datafiles_filter <- function(bids_dataset,
                                   acq = NULL,
                                   run = NULL,
                                   datatype = NULL) {
-  .bids_obj_checker(bids_dataset)
+  .bids_obj_check(bids_dataset)
 
   parse_param <- function(param) {
     if (is.null(param)) return(list(include = NULL, exclude = NULL))
@@ -194,3 +192,6 @@ bids_datafiles_filter <- function(bids_dataset,
   bids_data %>% dplyr::pull(file_path)
 }
 
+bids_object_filter <- function(bids_dataset) {
+  .bids_obj_check(bids_dataset)
+}

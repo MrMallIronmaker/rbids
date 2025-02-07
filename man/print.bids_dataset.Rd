@@ -4,7 +4,7 @@
 \alias{print.bids_dataset}
 \title{Print Method for BIDS Dataset}
 \usage{
-\method{print}{bids_dataset}(bd)
+\method{print}{bids_dataset}(bids_dataset)
 }
 \description{
 Print Method for BIDS Dataset
