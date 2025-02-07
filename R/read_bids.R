@@ -15,10 +15,9 @@ bids_get_motion_by_subject <- function(bids_dataset, subject) {
 }
 
 #' @export
-bids_participants <- function(bids_dataset) {
+bids_get_participants_data <- function(bids_dataset) {
   .bids_obj_check(bids_dataset)
   file_path <- .is_participants_exists(bids_dataset)
   participants_data <- read_tsv(file_path, show_col_types = FALSE)
-  glimpse(participants_data)
   invisible(participants_data)
 }

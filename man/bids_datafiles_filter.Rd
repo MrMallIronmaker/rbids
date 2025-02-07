@@ -12,7 +12,8 @@ bids_datafiles_filter(
   tracksys = NULL,
   acq = NULL,
   run = NULL,
-  datatype = NULL
+  datatype = "motion",
+  participant_ids = NULL
 )
 }
 \arguments{
@@ -30,7 +31,11 @@ bids_datafiles_filter(
 
 \item{run}{Optional. Run number(s) to include or exclude.}
 
-\item{datatype}{Optional. Data type(s) to include or exclude.}
+\item{datatype}{Optional. Default is "motion" data. Data type(s) to include or exclude.}
+
+\item{participant_ids}{Optional. Participant ID(s) to filter on.
+Accepts output from bids_participants_filter; note that these IDs include the
+"sub-" prefix.}
 }
 \value{
 A character vector of filtered file paths. Returns an empty vector if no
@@ -38,10 +43,13 @@ matches found.
 }
 \description{
 Filters a BIDS dataset based on specified subject, session, task,
-acquisition, tracking system, run, and datatype criteria.
+acquisition, tracking system, run, datatype criteria, and participant IDs.
 }
 \examples{
-bids_files <- bids_datafiles_filter(bids_dataset, subject = "1&2", datatype = "motion")
-bids_files <- bids_datafiles_filter(bids_dataset, subject = "-1", datatype = "motion")
+bids_files <- bids_datafiles_filter(bids_dataset, subject = "1&2")
+bids_files <- bids_datafiles_filter(bids_dataset, subject = "-1")
+# Using participant_ids returned from bids_participants_filter:
+p_ids <- bids_participants_filter(bids_dataset, Anomaly = "Yes")
+bids_files <- bids_datafiles_filter(bids_dataset, participant_ids = p_ids)
 
 }

@@ -9,9 +9,16 @@
 }
 
 #' @keywords Internal
-.bool_check <- function(value, name) {
+.single_character_check <- function(value, name) {
   if (!is.character(value) || length(value) != 1) {
     abort(paste(name, "must be a single character string"))
+  }
+}
+
+#' @keywords Internal
+.bool_check <- function(value, name) {
+  if (!is.logical(value) || length(value) != 1) {
+    abort(paste(name, "must be a bool"))
   }
 }
 

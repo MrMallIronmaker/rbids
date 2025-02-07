@@ -27,8 +27,8 @@
 #' @importFrom tidyr replace_na
 #' @export
 bids <- function(root, readonly = TRUE) {
-  .bool_check(root, "name")
-  .bool_check(readonly, "readonly")
+  .single_character_check(root, "`name`")
+  .bool_check(readonly, "`readonly`")
 
   if (!dir.exists(root)) {
     if (readonly) {
@@ -121,7 +121,7 @@ print.bids_dataset <- function(bids_dataset) {
 
 #' @title Filter BIDS Dataset Files
 #' @description Filters a BIDS dataset based on specified subject, session, task,
-#' acquisition, tracking system, run, and datatype criteria.
+#' acquisition, tracking system, run, datatype criteria, and participant IDs.
 #' @param bids_dataset A BIDS dataset object.
 #' @param subject Optional. Subject ID(s) to include or exclude.
 #' @param session Optional. Session ID(s) to include or exclude.
@@ -129,14 +129,20 @@ print.bids_dataset <- function(bids_dataset) {
 #' @param tracksys Optional. Tracking system(s) to include or exclude.
 #' @param acq Optional. Acquisition type(s) to include or exclude.
 #' @param run Optional. Run number(s) to include or exclude.
-#' @param datatype Optional. Data type(s) to include or exclude.
+#' @param datatype Optional. Default is "motion" data. Data type(s) to include or exclude.
+#' @param participant_ids Optional. Participant ID(s) to filter on.
+#'        Accepts output from bids_participants_filter; note that these IDs include the
+#'        "sub-" prefix.
 #'
 #' @return A character vector of filtered file paths. Returns an empty vector if no
 #' matches found.
 #'
 #' @examples
-#' bids_files <- bids_datafiles_filter(bids_dataset, subject = "1&2", datatype = "motion")
-#' bids_files <- bids_datafiles_filter(bids_dataset, subject = "-1", datatype = "motion")
+#' bids_files <- bids_datafiles_filter(bids_dataset, subject = "1&2")
+#' bids_files <- bids_datafiles_filter(bids_dataset, subject = "-1")
+#' # Using participant_ids returned from bids_participants_filter:
+#' p_ids <- bids_participants_filter(bids_dataset, Anomaly = "Yes")
+#' bids_files <- bids_datafiles_filter(bids_dataset, participant_ids = p_ids)
 #'
 #' @export
 bids_datafiles_filter <- function(bids_dataset,
@@ -146,7 +152,8 @@ bids_datafiles_filter <- function(bids_dataset,
                                   tracksys = NULL,
                                   acq = NULL,
                                   run = NULL,
-                                  datatype = NULL) {
+                                  datatype = "motion",
+                                  participant_ids = NULL) {
   .bids_obj_check(bids_dataset)
 
   parse_param <- function(param) {
@@ -184,6 +191,11 @@ bids_datafiles_filter <- function(bids_dataset,
     bids_data <- apply_filter(bids_data, field, params[[field]])
   }
 
+  if (!is.null(participant_ids)) {
+    cleaned_ids <- gsub("^sub-", "", participant_ids)
+    bids_data <- bids_data %>% dplyr::filter(subject %in% cleaned_ids)
+  }
+
   if (nrow(bids_data) == 0) {
     warning("No records match the filtering criteria.")
     return(character(0))
@@ -192,6 +204,34 @@ bids_datafiles_filter <- function(bids_dataset,
   bids_data %>% dplyr::pull(file_path)
 }
 
-bids_object_filter <- function(bids_dataset) {
+
+#' @title Filter Participants via the Participants File
+#'
+#' @param bids_dataset A BIDS dataset object.
+#' @param ... Named filtering criteria.
+#'
+#' @return A character vector of participant_id values that match the filtering criteria.
+#'
+#' @export
+bids_participants_filter <- function(bids_dataset, ...) {
   .bids_obj_check(bids_dataset)
+  participants <- bids_get_participants_data(bids_dataset)
+
+  if (!"participant_id" %in% colnames(participants)) {
+    abort("The participants file must contain a 'participant_id' column.")
+  }
+
+  conditions <- rlang::enquos(...)
+
+  filtered <- participants
+  if (length(conditions) > 0) {
+    filtered <- dplyr::filter(filtered, !!!conditions)
+  }
+
+  if (nrow(filtered) == 0) {
+    warning("No participants match the filtering criteria.")
+    return(character(0))
+  }
+
+  filtered$participant_id
 }
