@@ -87,7 +87,6 @@ print.bids_dataset <- function(bids_dataset) {
   cat(sprintf("%-20s %s\n", "Root:", bids_dataset$root))
   cat(sprintf("%-20s %d\n", "Data Files:", nrow(bids_dataset$index)))
 
-  # Extract unique counts and values
   subject_count <- length(unique(bids_dataset$index$subject))
   subjects <- paste(
     paste(head(sort(unique(bids_dataset$index$subject)), 5), collapse = ", "),
@@ -109,11 +108,29 @@ print.bids_dataset <- function(bids_dataset) {
   datatypes <- if (length(datatype_values) > 0)
     paste(sort(unique(datatype_values)), collapse = ", ") else "None"
 
+  tracksys_values <- bids_dataset$index$tracksys
+  tracksys_values <- tracksys_values[!is.na(tracksys_values)]
+  tracksys <- if (length(tracksys_values) > 0)
+    paste(sort(unique(tracksys_values)), collapse = ", ") else "None"
+
+  acq_values <- bids_dataset$index$acq
+  acq_values <- acq_values[!is.na(acq_values)]
+  acq <- if (length(acq_values) > 0)
+    paste(sort(unique(acq_values)), collapse = ", ") else "None"
+
+  run_values <- bids_dataset$index$run
+  run_values <- run_values[!is.na(run_values)]
+  run <- if (length(run_values) > 0)
+    paste(sort(unique(run_values)), collapse = ", ") else "None"
+
   cat(sprintf("%-20s %d\n", "Total Subjects:", subject_count))
   cat(sprintf("%-20s %s\n", "Subjects:", subjects))
   cat(sprintf("%-20s %s\n", "Sessions:", sessions))
   cat(sprintf("%-20s %s\n", "Tasks:", tasks))
   cat(sprintf("%-20s %s\n", "Datatypes:", datatypes))
+  cat(sprintf("%-20s %s\n", "Tracksys:", tracksys))
+  cat(sprintf("%-20s %s\n", "Acquisition:", acq))
+  cat(sprintf("%-20s %s\n", "Run:", run))
 
   invisible(bids_dataset)
 }
