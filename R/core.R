@@ -26,6 +26,7 @@ BIDS <- R6Class(
       self$root <- path_abs(root)
       self$readonly <- readonly
       self$build_index()
+      self$print()
     },
 
     build_index = function() {
@@ -121,8 +122,6 @@ BIDS <- R6Class(
       cat(sprintf("%-20s %s\n", "Tracksys:", tracksys))
       cat(sprintf("%-20s %s\n", "Acquisition:", acq))
       cat(sprintf("%-20s %s\n\n", "Run:", run))
-
-      invisible(self)
     }
   )
 )
