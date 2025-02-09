@@ -22,4 +22,6 @@ Imports:
     tidyr,
     readr,
     magrittr,
-    purrr
+    purrr,
+    R6,
+    fs
