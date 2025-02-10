@@ -7,20 +7,17 @@ I work in R, and it solves my problems for standardized datasets.
 ## Quick Sample
 
 ```r
-# devtools::install_github("markromanmiller/rbids")
 library(rbids)
 
-bd <- bids("path/to/the/bids/dataset")
+bids <- Bids$new(root = "/Users/fengsifang/Documents/PuzzleProjectBIDS")
 
-# get participant-level data
-bd %>%
-  bids_subjects()
+valid_participants <- bids$load_participant() %>%
+  dplyr::filter(Anomaly == "No")
 
-# get metadata about all the sessions files
-bd %>%
-  bids_sessions()
+motion_data <- bids$load_motion(
+  tracksys == "LeftControllerStabilizedMovement",
+  subject %in% valid_participants$participant_id
+)
 
-# get metadata about all the motion files
-bd %>%
-  bids_motion_datafiles()
+log_files <- bids$load_logs()
 ```
