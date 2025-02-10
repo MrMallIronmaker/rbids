@@ -65,28 +65,49 @@ Bids <- R6Class( # nolint: object_name_linter.
     },
     load_participant = function() {
       file_path <- .is_participants_exists(self)
-      readr::read_tsv(file_path)
+      readr::read_tsv(file_path, show_col_types = FALSE)
     },
-    load_motion = function() {
-
-    },
-    load_logs = function() {
-      logs_files <- self$index %>%
-        dplyr::filter(datatype == "events")
-
-      if (nrow(logs_files) == 0) {
-        warning("No log files found.")
+    .load_files_with_progress = function(file_subset) {
+      if (nrow(file_subset) == 0) {
+        warning("No files found.", call. = FALSE)
         return(NULL)
       }
+      message(sprintf("Filtered %d files.\n", nrow(file_subset)))
+      flush.console()
 
-      data_list <- lapply(seq_len(nrow(logs_files)), function(i) {
-        df <- readr::read_tsv(logs_files$file_path[i])
-        df$participant_id <- logs_files$subject[i]
-        df
-      })
+      pb <- txtProgressBar(min = 0, max = nrow(file_subset), style = 3)
+      data_list <- vector("list", nrow(file_subset))
+      problematic_files <- character(0)
 
-      result <- dplyr::bind_rows(data_list)
-      return(result)
+      for (i in seq_len(nrow(file_subset))) {
+        file_path <- file_subset$file_path[i]
+        df <- readr::read_tsv(file_path, show_col_types = FALSE)
+
+        df$participant_id <- paste0("sub-", file_subset$subject[i])
+        data_list[[i]] <- df
+        setTxtProgressBar(pb, i)
+      }
+      close(pb)
+
+      if (length(problematic_files) > 0) {
+        warning("The following files have issues, data type conflict:", call. = FALSE)
+        print(problematic_files)
+        stop("Data merge failed. Please check the problematic files.")
+      }
+
+      dplyr::bind_rows(data_list)
+    },
+    load_motion = function(...) {
+      motion_files <- self$index %>%
+        dplyr::filter(datatype == "motion", ...)
+
+      self$.load_files_with_progress(motion_files)
+    },
+    load_logs = function(...) {
+      logs_files <- self$index %>%
+        dplyr::filter(datatype == "events", ...)
+
+      self$.load_files_with_progress(logs_files)
     },
     print = function() {
       cat("\nBIDS Dataset Summary\n")
