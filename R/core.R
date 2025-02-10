@@ -198,7 +198,9 @@ Bids <- R6Class( # nolint: object_name_linter.
 
       bids_index <- tibble::tibble(
         file_path = all_tsv_files,
-        subject = paste0("sub-", extracted_data[, "subject"]),
+        subject = ifelse(is.na(extracted_data[, "subject"]),
+                         NA_character_,
+                         paste0("sub-", extracted_data[, "subject"])),
         session = extracted_data[, "session"],
         task = extracted_data[, "task"],
         tracksys = extracted_data[, "tracksys"],
