@@ -16,7 +16,7 @@
 .is_participants_exists <- function(bids) {
   file_path <- file.path(bids$root, "participants.tsv")
   if (!file.exists(file_path)) {
-    abort("participants.tsv does not exist.")
+    abort("`participants.tsv` does not exist.")
   } else {
     file_path
   }
