@@ -51,7 +51,7 @@ Bids <- R6Class( # nolint: object_name_linter.
 
       bids_index <- tibble::tibble(
         file_path = all_tsv_files,
-        subject = extracted_data[, "subject"],
+        subject = paste0("sub-", extracted_data[, "subject"]),
         session = extracted_data[, "session"],
         task = extracted_data[, "task"],
         tracksys = extracted_data[, "tracksys"],
@@ -83,7 +83,7 @@ Bids <- R6Class( # nolint: object_name_linter.
         file_path <- file_subset$file_path[i]
         df <- readr::read_tsv(file_path, show_col_types = FALSE)
 
-        df$participant_id <- paste0("sub-", file_subset$subject[i])
+        df$participant_id <- file_subset$subject[i]
         data_list[[i]] <- df
         setTxtProgressBar(pb, i)
       }
